@@ -1,0 +1,62 @@
+# dependencies
+**/node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# build and cache
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/web-build/
+**/.expo/
+**/.expo-shared/
+**/.turbo/
+**/coverage/
+**/.metro-health-check*
+
+# React Native generated native projects
+**/android/
+**/ios/
+
+# environment files
+.env*
+!.env.example
+
+# framework-generated types
+**/next-env.d.ts
+**/expo-env.d.ts
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# deployment
+**/.vercel/
+
+# local/editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# secrets and signing artifacts
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*

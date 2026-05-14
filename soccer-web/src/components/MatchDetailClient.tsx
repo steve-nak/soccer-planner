@@ -159,6 +159,10 @@ export function MatchDetailClient({
     }
   };
 
+  const getTotalPlayersCount = () => {
+    return isJoined ? 1 + playerExtraSlots : 1;
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -170,12 +174,15 @@ export function MatchDetailClient({
 
       {/* Match Header */}
       <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <div className="flex justify-between items-start mb-4">
-          <div>
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {formattedDate} at {formattedTime}
             </h1>
-            <p className="text-lg text-gray-600">{match.location}</p>
+            <p className="text-lg text-gray-600 mb-4">{match.location}</p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Group:</span> {match.groupTitle}
+            </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
             <span
@@ -196,48 +203,103 @@ export function MatchDetailClient({
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 mb-6">
-          <span className="font-medium">Group:</span> {match.groupTitle}
-        </p>
+        {/* Action Section */}
+        <div className="border-t pt-6">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* Join/Leave & Friends Section */}
+            {match.isActive ? (
+              <div className="flex items-center gap-4">
+                {/* Join/Leave Button */}
+                <button
+                  onClick={handleJoinToggle}
+                  disabled={isLoading}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-colors text-white ${
+                    isJoined
+                      ? "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
+                      : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                  }`}
+                >
+                  {isLoading ? "Loading..." : isJoined ? "Leave Match" : "Join Match"}
+                </button>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          {/* Join/Leave Button */}
-          {match.isActive && (
+                {/* Friends Slots Section - Only when joined */}
+                {isJoined && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-900">
+                      Bringing friends:
+                    </span>
+                    {!slotsEditMode ? (
+                      <>
+                        <span className="text-lg font-bold text-blue-600">
+                          +{playerExtraSlots}
+                        </span>
+                        <button
+                          onClick={() => setSlotsEditMode(true)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+                        >
+                          Edit
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSlotDecrement}
+                          disabled={playerExtraSlots === 0 || slotsLoading}
+                          className="px-2 py-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 rounded font-semibold text-sm"
+                        >
+                          −
+                        </button>
+                        <span className="text-lg font-bold text-blue-600 w-6 text-center">
+                          {playerExtraSlots}
+                        </span>
+                        <button
+                          onClick={handleSlotIncrement}
+                          disabled={playerExtraSlots === 10 || slotsLoading}
+                          className="px-2 py-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 rounded font-semibold text-sm"
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={handleUpdateSlots}
+                          disabled={slotsLoading}
+                          className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded text-sm font-semibold"
+                        >
+                          {slotsLoading ? "..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setSlotsEditMode(false)}
+                          disabled={slotsLoading}
+                          className="px-3 py-1 bg-gray-400 hover:bg-gray-500 disabled:bg-gray-300 text-white rounded text-sm font-semibold"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">
+                {match.canceled ? "This match has been canceled" : "This match is no longer active"}
+              </p>
+            )}
+
+            {/* Share Link Button */}
             <button
-              onClick={handleJoinToggle}
-              disabled={isLoading}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                isJoined
-                  ? "bg-red-600 hover:bg-red-700 text-white disabled:bg-red-400"
-                  : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-400"
-              }`}
+              onClick={handleShareLink}
+              className="px-6 py-3 rounded-lg font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+              title="Copy match link to clipboard"
             >
-              {isLoading ? "Loading..." : isJoined ? "Leave Match" : "Join Match"}
+              🔗 Share Match
             </button>
-          )}
 
-          {!match.isActive && (
-            <p className="text-sm text-gray-600 py-2">
-              {match.canceled ? "This match has been canceled" : "This match is no longer active"}
-            </p>
-          )}
-
-          {/* Share Link Button */}
-          <button
-            onClick={handleShareLink}
-            className="px-6 py-2 rounded-lg font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
-            title="Copy match link to clipboard"
-          >
-            🔗 Share Match
-          </button>
-
-          {/* Share Message */}
-          {shareMessage && (
-            <div className="text-sm font-medium text-green-600 py-2">
-              {shareMessage}
-            </div>
-          )}
+            {/* Share Message */}
+            {shareMessage && (
+              <div className="text-sm font-medium text-green-600">
+                {shareMessage}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -257,8 +319,15 @@ export function MatchDetailClient({
                 className="flex items-center justify-between py-3 px-3 border border-gray-200 rounded-lg"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{player.userName}</p>
-                  <p className="text-xs text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900">{player.userName}</p>
+                    {player.userId === currentUserId && (
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        You
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
                     Joined{" "}
                     {new Date(player.joinedAt).toLocaleDateString("en-US", {
                       month: "short",
@@ -269,65 +338,10 @@ export function MatchDetailClient({
                   </p>
                 </div>
 
-                {/* Extra Slots Display and Edit */}
-                {player.userId === currentUserId && isJoined ? (
-                  <div className="flex items-center gap-3">
-                    {!slotsEditMode ? (
-                      <>
-                        {player.extraSlots > 0 && (
-                          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm font-medium">
-                            +{player.extraSlots} slot{player.extraSlots > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => setSlotsEditMode(true)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
-                        >
-                          Edit Slots
-                        </button>
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={handleSlotDecrement}
-                          disabled={playerExtraSlots === 0 || slotsLoading}
-                          className="px-2 py-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 rounded text-sm font-semibold"
-                        >
-                          −
-                        </button>
-                        <span className="text-lg font-bold text-gray-900 w-8 text-center">
-                          {playerExtraSlots}
-                        </span>
-                        <button
-                          onClick={handleSlotIncrement}
-                          disabled={playerExtraSlots === 10 || slotsLoading}
-                          className="px-2 py-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 rounded text-sm font-semibold"
-                        >
-                          +
-                        </button>
-                        <button
-                          onClick={handleUpdateSlots}
-                          disabled={slotsLoading}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded text-sm font-semibold"
-                        >
-                          {slotsLoading ? "Saving..." : "Save"}
-                        </button>
-                        <button
-                          onClick={() => setSlotsEditMode(false)}
-                          disabled={slotsLoading}
-                          className="px-3 py-1 bg-gray-400 hover:bg-gray-500 disabled:bg-gray-300 text-white rounded text-sm font-semibold"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  player.extraSlots > 0 && (
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm font-medium">
-                      +{player.extraSlots} slot{player.extraSlots > 1 ? "s" : ""}
-                    </span>
-                  )
+                {player.extraSlots > 0 && (
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm font-medium">
+                    +{player.extraSlots}
+                  </span>
                 )}
               </div>
             ))}

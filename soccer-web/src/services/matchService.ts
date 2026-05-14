@@ -110,8 +110,12 @@ export async function getAllUserMatches(
   // For each match, get player count, comment count, and check if user joined
   const matchesWithDetails = await Promise.all(
     userMatches.map(async (match) => {
-      const playerCountResult = await db
-        .select({ count: count() })
+      // Get players with their extra slots to calculate total count
+      const players = await db
+        .select({
+          userId: matchJoins.userId,
+          extraSlots: matchJoins.extraSlots,
+        })
         .from(matchJoins)
         .where(eq(matchJoins.matchId, match.id));
 
@@ -132,9 +136,14 @@ export async function getAllUserMatches(
         .limit(1);
 
       const state = calculateMatchState(match.date);
-      const playerCount = playerCountResult[0]?.count || 0;
+      
+      // Calculate total player count including extra slots (friends)
+      const totalPlayerCount = players.reduce((sum, player) => {
+        return sum + 1 + player.extraSlots;
+      }, 0);
+      
       const commentCount = commentCountResult[0]?.count || 0;
-      const capacityStatus = calculateCapacityStatus(playerCount, match.capacity);
+      const capacityStatus = calculateCapacityStatus(totalPlayerCount, match.capacity);
 
       return {
         id: match.id,
@@ -146,7 +155,7 @@ export async function getAllUserMatches(
         canceled: match.canceled,
         state,
         capacityStatus,
-        playerCount,
+        playerCount: totalPlayerCount,
         commentCount,
         joinedByCurrentUser: userJoined.length > 0,
       };
@@ -235,7 +244,13 @@ export async function getMatchDetails(matchId: number, userId?: number) {
 
   const state = calculateMatchState(match.date);
   const isActive = isMatchActive(state, match.canceled);
-  const capacityStatus = calculateCapacityStatus(players.length, match.capacity);
+  
+  // Calculate total player count including extra slots (friends)
+  const totalPlayerCount = players.reduce((sum, player) => {
+    return sum + 1 + player.extraSlots; // 1 for the player + extra slots
+  }, 0);
+  
+  const capacityStatus = calculateCapacityStatus(totalPlayerCount, match.capacity);
 
   return {
     id: match.id,
@@ -249,7 +264,7 @@ export async function getMatchDetails(matchId: number, userId?: number) {
     state,
     isActive,
     capacityStatus,
-    playerCount: players.length,
+    playerCount: totalPlayerCount,
     players,
     comments,
     joinedByCurrentUser: userId

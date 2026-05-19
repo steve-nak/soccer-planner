@@ -51,44 +51,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('API URL not configured');
       }
 
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
-          const url = `${apiUrl}/auth/login`;
-          console.log('Login request to:', url);
+        const url = `${apiUrl}/auth/login`;
+        console.log('Login request to:', url);
 
-          const response = await fetch(url, {
+        const response = await fetch(url, {
+        method: 'POST',
+          headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
           console.log('Response status:', response.status);
 
-        throw new Error(error.error || 'Login failed');
-            let errorMessage = 'Login failed';
-            try {
-              const error = await response.json();
-              errorMessage = error.error || error.message || 'Login failed';
-            } catch (e) {
-              errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-            }
-            throw new Error(errorMessage);
-      const data = await response.json();
-      const { token: newToken, user: userData } = data;
-
-      // Store token and user info
-      await SecureStore.setItemAsync('userToken', newToken);
-          if (!newToken || !userData) {
-            throw new Error('Invalid response from server');
+          let errorMessage = 'Login failed';
+          try {
+            const error = await response.json();
+            errorMessage = error.error || error.message || 'Login failed';
+          } catch (e) {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           }
+          throw new Error(errorMessage);
+        }
 
+        const data = await response.json();
+        const { token: newToken, user: userData } = data;
+
+        if (!newToken || !userData) {
+          throw new Error('Invalid response from server');
+        }
+
+        // Store token and user info
+        await SecureStore.setItemAsync('userToken', newToken);
       await SecureStore.setItemAsync('user', JSON.stringify(userData));
 
       setToken(newToken);
       setUser(userData);
     } catch (error) {
+        console.error('Login error:', error);
       throw error;
     }
   };

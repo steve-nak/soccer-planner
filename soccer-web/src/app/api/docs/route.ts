@@ -1,21 +1,14 @@
-export async function GET() {
-  const html = `<!doctype html>
-  <html>
-  <head><meta charset="utf-8"><title>Soccer Planner API</title></head>
-  <body>
-    <h1>Soccer Planner API (minimal)</h1>
-    <ul>
-      <li>POST /api/auth/login - body: {"email":"...","password":"..."} → { token, user }</li>
-      <li>GET /api/matches?page=1&pageSize=20 - Authorization: Bearer &lt;token&gt;</li>
-      <li>GET /api/matches/&lt;id&gt; - Authorization: Bearer &lt;token&gt;</li>
-      <li>POST /api/matches/&lt;id&gt;/join - Authorization: Bearer &lt;token&gt;</li>
-      <li>POST /api/matches/&lt;id&gt;/leave - Authorization: Bearer &lt;token&gt;</li>
-      <li>POST /api/matches/&lt;id&gt;/slots - body: {"extraSlots":1} - Authorization: Bearer &lt;token&gt;</li>
-    </ul>
-  </body>
-  </html>`;
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
 
-  return new Response(html, {
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
+export async function GET() {
+  try {
+    const filePath = fileURLToPath(new URL("./docs.html", import.meta.url));
+    const html = await readFile(filePath, "utf8");
+    return new Response(html, {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  } catch (err) {
+    return new Response("Not found", { status: 404 });
+  }
 }

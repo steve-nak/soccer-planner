@@ -11,7 +11,8 @@
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nakov.soccermobile"
     },
     "web": {
       "output": "static"
@@ -26,7 +27,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "49178202-1be0-4774-b356-06cac36e3855"
+        "projectId": "cbb40e6c-6e43-43df-83f6-001444cc7e88"
       }
     }
   }

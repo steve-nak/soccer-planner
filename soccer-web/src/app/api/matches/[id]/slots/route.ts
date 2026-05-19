@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { getUserFromAuthHeader, requireAuth } from "@/lib/apiAuth";
 import { getMatchDetails, updateExtraSlots } from "@/services/matchService";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const user = await getUserFromAuthHeader(req);
-  const unauthorized = requireAuth(user);
-  if (unauthorized) return unauthorized;
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
-  const id = Number(params.id);
+export async function POST(req: Request, { params }: RouteContext) {
+  const user = await getUserFromAuthHeader(req);
+  if (!user) return requireAuth(user);
+
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (Number.isNaN(id)) {
     return NextResponse.json({ error: "Invalid match id" }, { status: 400 });
   }

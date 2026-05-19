@@ -2,9 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/jwt";
 
 const PUBLIC_PATHS = ["/", "/login", "/register"];
+const PUBLIC_API_PATHS = ["/api/auth/login"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.includes(pathname);
+}
+
+function isPublicApiPath(pathname: string) {
+  return PUBLIC_API_PATHS.includes(pathname);
 }
 
 function getCorsHeaders(origin: string | null) {
@@ -19,6 +24,14 @@ function getCorsHeaders(origin: string | null) {
   } as Record<string, string>;
 }
 
+function withCors(response: NextResponse, corsHeaders: Record<string, string>) {
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    response.headers.set(key, value);
+  }
+
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isApi = pathname.startsWith("/api");
@@ -31,9 +44,13 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
-  // Allow public page routes as before. For API public routes, include CORS headers.
+  if (isApi && isPublicApiPath(pathname)) {
+    return withCors(NextResponse.next(), corsHeaders);
+  }
+
+  // Allow public page routes as before.
   if (isPublicPath(pathname)) {
-    return isApi ? NextResponse.next({ headers: corsHeaders }) : NextResponse.next();
+    return NextResponse.next();
   }
 
   // API requests: authenticate and return JSON 401 on failure (with CORS headers)
@@ -42,7 +59,7 @@ export async function middleware(request: NextRequest) {
     const session = token ? await verifySessionToken(token) : null;
 
     if (session) {
-      return NextResponse.next({ headers: corsHeaders });
+      return withCors(NextResponse.next(), corsHeaders);
     }
 
     return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {

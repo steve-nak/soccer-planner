@@ -22,9 +22,11 @@ export async function POST(req: Request) {
       { token, user },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Invalid credentials";
+
     return NextResponse.json(
-      { error: err?.message || "Invalid credentials" },
+      { error: message },
       { status: 401 }
     );
   }

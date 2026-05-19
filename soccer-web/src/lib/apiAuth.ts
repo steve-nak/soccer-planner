@@ -1,4 +1,4 @@
-import { verifySessionToken } from "./jwt";
+import { type SessionPayload, verifySessionToken } from "./jwt";
 
 export async function getUserFromAuthHeader(req: Request) {
   try {
@@ -12,12 +12,14 @@ export async function getUserFromAuthHeader(req: Request) {
 
     const payload = await verifySessionToken(token);
     return payload;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
-export function requireAuth(payload: any) {
+export function requireAuth(payload: null): Response;
+export function requireAuth(payload: SessionPayload): null;
+export function requireAuth(payload: SessionPayload | null) {
   if (!payload) {
     const headers = { "Content-Type": "application/json" };
     return new Response(JSON.stringify({ error: "Unauthorized" }), {

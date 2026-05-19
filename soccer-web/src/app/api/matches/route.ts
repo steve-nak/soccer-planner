@@ -4,8 +4,7 @@ import { getActiveMatches } from "@/services/matchService";
 
 export async function GET(req: Request) {
   const user = await getUserFromAuthHeader(req);
-  const unauthorized = requireAuth(user);
-  if (unauthorized) return unauthorized;
+  if (!user) return requireAuth(user);
 
   const url = new URL(req.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));

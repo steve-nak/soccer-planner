@@ -1,24 +1,53 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+function RootLayoutNav() {
+  const { isLoading, isAuthenticated } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+  useEffect(() => {
+    if (isLoading) return;
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login';
+
+    if (isAuthenticated && inAuthGroup) {
+      // Redirect to home if authenticated and trying to access auth screens
+      router.replace('/');
+    } else if (!isAuthenticated && !inAuthGroup && segments[0] !== undefined) {
+      // Redirect to login if not authenticated and trying to access protected screens
+      const publicScreens = ['index']; // Home screen
+      if (!publicScreens.includes(segments[0])) {
+        router.replace('/login');
+      }
+    }
+  }, [isAuthenticated, segments, isLoading]);
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <>
+      <Stack screenOptions={{ headerTitleAlign: 'center' }}>
+        <Stack.Screen name="index" options={{ title: 'Home' }} />
+        <Stack.Screen name="login" options={{ title: 'Login' }} />
+        <Stack.Screen name="matches" options={{ title: 'Matches' }} />
+        <Stack.Screen name="matches/[id]" options={{ title: 'Match Details' }} />
       </Stack>
       <StatusBar style="auto" />
-    </ThemeProvider>
+    </>
   );
 }
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
+}
+

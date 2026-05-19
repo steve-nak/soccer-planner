@@ -1,5 +1,37 @@
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+const TOKEN_KEY = 'userToken';
+const USER_KEY = 'user';
+
+async function getStoredValue(key: string) {
+  if (Platform.OS === 'web') {
+    return globalThis.localStorage?.getItem(key) ?? null;
+  }
+
+  const SecureStore = await import('expo-secure-store');
+  return SecureStore.getItemAsync(key);
+}
+
+async function setStoredValue(key: string, value: string) {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.setItem(key, value);
+    return;
+  }
+
+  const SecureStore = await import('expo-secure-store');
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function deleteStoredValue(key: string) {
+  if (Platform.OS === 'web') {
+    globalThis.localStorage?.removeItem(key);
+    return;
+  }
+
+  const SecureStore = await import('expo-secure-store');
+  await SecureStore.deleteItemAsync(key);
+}
 
 interface User {
   userId: string;
@@ -30,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const bootstrapAsync = async () => {
     try {
-      const savedToken = await SecureStore.getItemAsync('userToken');
-      const savedUser = await SecureStore.getItemAsync('user');
+      const savedToken = await getStoredValue(TOKEN_KEY);
+      const savedUser = await getStoredValue(USER_KEY);
       
       if (savedToken && savedUser) {
         setToken(savedToken);
@@ -83,8 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Store token and user info
-        await SecureStore.setItemAsync('userToken', newToken);
-      await SecureStore.setItemAsync('user', JSON.stringify(userData));
+      await setStoredValue(TOKEN_KEY, newToken);
+      await setStoredValue(USER_KEY, JSON.stringify(userData));
 
       setToken(newToken);
       setUser(userData);
@@ -96,8 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await SecureStore.deleteItemAsync('userToken');
-      await SecureStore.deleteItemAsync('user');
+      await deleteStoredValue(TOKEN_KEY);
+      await deleteStoredValue(USER_KEY);
       setToken(null);
       setUser(null);
     } catch (error) {

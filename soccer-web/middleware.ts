@@ -24,12 +24,15 @@ function getCorsHeaders(origin: string | null) {
   } as Record<string, string>;
 }
 
-function withCors(response: NextResponse, corsHeaders: Record<string, string>) {
-  for (const [key, value] of Object.entries(corsHeaders)) {
-    response.headers.set(key, value);
-  }
+async function getApiSession(request: NextRequest) {
+  const cookieToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const authHeader = request.headers.get("authorization");
+  const [scheme, bearerToken] = authHeader?.split(" ") ?? [];
+  const token =
+    cookieToken ??
+    (scheme?.toLowerCase() === "bearer" && bearerToken ? bearerToken : null);
 
-  return response;
+  return token ? verifySessionToken(token) : null;
 }
 
 export async function middleware(request: NextRequest) {
@@ -45,7 +48,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isApi && isPublicApiPath(pathname)) {
-    return withCors(NextResponse.next(), corsHeaders);
+    return NextResponse.next();
   }
 
   // Allow public page routes as before.
@@ -55,11 +58,10 @@ export async function middleware(request: NextRequest) {
 
   // API requests: authenticate and return JSON 401 on failure (with CORS headers)
   if (isApi) {
-    const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-    const session = token ? await verifySessionToken(token) : null;
+    const session = await getApiSession(request);
 
     if (session) {
-      return withCors(NextResponse.next(), corsHeaders);
+      return NextResponse.next();
     }
 
     return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {

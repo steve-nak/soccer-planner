@@ -92,7 +92,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <Text style={styles.footerText}>
-        Don't have an account? Register through the web app.
+        Don&apos;t have an account? Register through the web app.
       </Text>
     </View>
   );

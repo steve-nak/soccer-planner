@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const error = await response.json();
             errorMessage = error.error || error.message || 'Login failed';
-          } catch (e) {
+          } catch {
             errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           }
           throw new Error(errorMessage);
